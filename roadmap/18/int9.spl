@@ -1,0 +1,103 @@
+//setting up user stack and swiching to kernel mode,al;so changes mode flag ,a;so get the filename
+[PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 13] = SP;
+alias userSP R0;
+userSP=SP;
+alias currentpid R6;
+currentpid=[SYSTEM_STATUS_TABLE + 1];
+SP =[PROCESS_TABLE+([SYSTEM_STATUS_TABLE+1]*16)+11]*512-1;
+[PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 9]=9;
+alias main R1;
+alias offset R2;
+main=[PTBR + 2 * ((userSP - 4)/ 512)];
+offset=(userSP-4)%512;
+alias filename R3;
+filename=[main*512+offset];
+alias counter R4;
+counter=1;
+alias inodeindex R5;
+//checking in inode table and searching for file type and file name
+
+while(counter<60)do
+  if(([INODE_TABLE + 16*counter + 1]==filename)&&([INODE_TABLE + 16*counter]==3))then
+    inodeindex=counter;
+    R1=3;
+    R2=[SYSTEM_STATUS_TABLE+1];
+    call MOD_1;
+    R4=[PROCESS_TABLE + ( currentpid * 16) + 11];
+    [MEMORY_FREE_LIST+R4]=[MEMORY_FREE_LIST+R4]+1;
+    [SYSTEM_STATUS_TABLE+2]=[SYSTEM_STATUS_TABLE+2]-1;
+    SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 11] * 512 - 1;
+    [PROCESS_TABLE + ( currentpid * 16) + 7]=inodeindex;
+    [PROCESS_TABLE + ( currentpid * 16) + 4]=RUNNING;
+    PTLR=10;
+    PTBR=PAGE_TABLE_BASE+20;
+    //LIB
+    [PTBR+0] = 63;
+    [PTBR+1] = "0100";
+    [PTBR+2] = 64;
+    [PTBR+3] = "0100";
+    R1=1;
+    //HEAP
+    call MOD_2;
+    [PTBR+4] = R0;
+    [PTBR+5] = "0110";
+    call MOD_2;
+    [PTBR+6] = R0;
+    [PTBR+7] = "0110";
+    //STACK
+    
+    call MOD_2;
+    [PTBR+16] = R0;
+    [PTBR+17] = "0110";
+    call MOD_2;
+    [PTBR+18] = R0;
+    [PTBR+19] = "0110";
+    R6=[INODE_TABLE + 16*inodeindex + 2];
+  //  print R6;
+    if(R6%512>0)then
+      R6=(R6/512)+1;
+    else
+      R6=(R6/512);
+    endif;
+    R2=0;
+  //  print R6;
+    while(R6>0)do
+      call MOD_2;
+     // print R2;
+      //print R0;
+   //  print inodeindex;
+      alias  blocknum R7;
+      alias  pagenum R8;
+      R7=[INODE_TABLE+16*inodeindex+8+R2];
+      R8=R0;
+      multipush(R0,R1,R2,R3,R4,R5,R6);
+      R1=2;
+       print R1;
+       print R2;
+      R2=[SYSTEM_STATUS_TABLE+1];
+      R3=pagenum;
+      R4=blocknum;
+      call MOD_4;
+    
+    
+      multipop(R0,R1,R2,R3,R4,R5,R6);
+      [PTBR+8+(R2*2)] = R0;
+      [PTBR+9+(R2*2)] = "0100";
+      R6=R6-1;
+     // print R0;
+    //  print R6;
+      R2=R2+1;
+    endwhile;
+    [[PTBR+16]*512]=[[PTBR+8]*512+1];
+    SP=8*512;
+    [PROCESS_TABLE + (currentpid * 16) + 9]=0;
+    ireturn;
+  endif;
+  counter=counter+1;
+endwhile;
+
+
+[PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 9]=0;
+SP=[PROCESS_TABLE+([SYSTEM_STATUS_TABLE+1]*16)+13];
+[([PTBR + 2 * ((userSP - 1) / 512)] * 512) + ((userSP - 1) % 512)]=-1;
+ireturn;

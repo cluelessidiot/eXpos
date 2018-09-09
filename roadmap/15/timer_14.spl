@@ -1,0 +1,19 @@
+//->setting uptr value
+[PROCESS_TABLE +(16*[SYSTEM_STATUS_TABLE +1])+13]=SP;
+//converting stack to kernel mode
+SP=[PROCESS_TABLE +(16*[SYSTEM_STATUS_TABLE +1])+11]*512-1;
+//saving registers of current running program
+backup;
+
+//setting pid
+alias currentPID R0;
+currentPID = [SYSTEM_STATUS_TABLE+1];
+alias process_table_entry R1;
+process_table_entry = PROCESS_TABLE + currentPID * 16;
+[process_table_entry + 4] = READY;
+
+call MOD_5;
+//mod_5 will assign new process and return to this point,so we want to restore our execution where we stopped last 
+restore;
+SP=[PROCESS_TABLE +(16*[SYSTEM_STATUS_TABLE +1])+13];
+ireturn;

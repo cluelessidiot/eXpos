@@ -1,0 +1,108 @@
+//timer
+loadi(4,17);
+loadi(5,18);
+//library
+loadi(63,13);
+loadi(64,14);
+//init
+loadi(65,7);
+loadi(66,8);
+//loading exec
+loadi(92,69);
+//int10 routine or exit routine
+loadi(22,35);
+loadi(23,36);
+//exception handler
+loadi(2,15);
+loadi(3,16);
+//int 7
+loadi(16,29);
+loadi(17,30);
+//mod5 conterxt switch
+loadi(50,63);
+loadi(51,64);
+//init process odd program
+PTLR=10;
+PTBR=PAGE_TABLE_BASE+20;
+//LIB
+[PTBR+0] = 63;
+[PTBR+1] = "0100";
+[PTBR+2] = 64;
+[PTBR+3] = "0100";
+//HEAP
+[PTBR+4] = 78;
+[PTBR+5] = "0110";
+[PTBR+6] = 79;
+[PTBR+7] = "0110";
+//CODE
+[PTBR+8] = 65;
+[PTBR+9] = "0100";
+[PTBR+10] = 66;
+[PTBR+11] = "0100";
+[PTBR+12] = -1;
+[PTBR+13] = "0000";
+[PTBR+14] = -1;
+[PTBR+15] = "0000";
+//STACK
+[PTBR+16] = 76;
+[PTBR+17] = "0110";
+[PTBR+18] = 77;
+[PTBR+19] = "0100";
+[PROCESS_TABLE + 17] = 1;
+[PROCESS_TABLE + 20] = CREATED;
+[PROCESS_TABLE + 27] = 80;
+[PROCESS_TABLE + 29] = 8*512;
+[PROCESS_TABLE + 28] = 0;
+[PROCESS_TABLE + 30] = PTBR;
+[PROCESS_TABLE + 31] = PTLR;
+[76 * 512] = [65*512 + 1];
+//exec process even program
+PTLR=10;
+PTBR=PAGE_TABLE_BASE+40;
+//LIB
+[PTBR+0] = 63;
+[PTBR+1] = "0100";
+[PTBR+2] = 64;
+[PTBR+3] = "0100";
+//HEAP
+[PTBR+4] = 90;
+[PTBR+5] = "0110";
+[PTBR+6] = 91;
+[PTBR+7] = "0110";
+//CODE
+[PTBR+8] = 92;
+[PTBR+9] = "0100";
+[PTBR+10] = 93;
+[PTBR+11] = "0100";
+[PTBR+12] = -1;
+[PTBR+13] = "0000";
+[PTBR+14] = -1;
+[PTBR+15] = "0000";
+//STACK
+[PTBR+16] = 96;
+[PTBR+17] = "0110";
+[PTBR+18] = 97;
+[PTBR+19] = "0100";
+[PROCESS_TABLE + 17 + 16] = 2;
+[PROCESS_TABLE + 20 + 16] = CREATED;
+[PROCESS_TABLE + 27 + 16] = 100;
+[PROCESS_TABLE + 29 + 16] = 8*512;
+[PROCESS_TABLE + 28 + 16] = 0;
+[PROCESS_TABLE + 30 + 16] = PTBR;
+[PROCESS_TABLE + 31 + 16] = PTLR;
+[96 * 512] = [92*512 + 1];
+//setting all other process to TERMINATED inorder to switch context
+[PROCESS_TABLE + (3*16) + 4] = TERMINATED;
+[PROCESS_TABLE + (4*16) + 4] = TERMINATED;
+[PROCESS_TABLE + (5*16) + 4] = TERMINATED;
+[PROCESS_TABLE + (6*16) + 4] = TERMINATED;
+[PROCESS_TABLE + (7*16) + 4] = TERMINATED;
+[PROCESS_TABLE + (8*16) + 4] = TERMINATED;
+[PROCESS_TABLE + (9*16) + 4] = TERMINATED;
+[PROCESS_TABLE + (10*16) + 4] = TERMINATED;
+[PROCESS_TABLE + (11*16) + 4] = TERMINATED;
+[PROCESS_TABLE + (12*16) + 4] = TERMINATED;
+[PROCESS_TABLE + (13*16) + 4] = TERMINATED;
+[PROCESS_TABLE + (14*16) + 4] = TERMINATED;
+[PROCESS_TABLE + (15*16) + 4] = TERMINATED;
+return;

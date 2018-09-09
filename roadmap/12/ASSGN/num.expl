@@ -1,0 +1,31 @@
+
+type
+student
+{
+  str name;
+  int roll;
+}
+endtype
+
+int main()
+{
+decl
+    int temp,num;
+    str as;
+    student s;
+enddecl
+begin
+     temp=initialize(); 
+     s=alloc();
+     s.name="jhon";
+     s.roll=5;
+     breakpoint;
+     temp=exposcall("Write",-2,s.name);
+     breakpoint;
+     temp=exposcall("Write",-2,s.roll);
+     breakpoint;
+     free(s);
+    return 0;
+end
+}
+

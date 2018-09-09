@@ -1,0 +1,34 @@
+
+alias functionNum R1;
+if(functionNum==1) then
+ [SYSTEM_STATUS_TABLE+3]=[SYSTEM_STATUS_TABLE+3]+1;
+ while([SYSTEM_STATUS_TABLE+2]==0) do
+  [PROCESS_TABLE+[SYSTEM_STATUS_TABLE+1]*16+4]=WAIT_MEM;
+  multipush(R0,R1,R2);
+  call MOD_5;
+  multipop(R0,R1,R2);
+ endwhile;
+ [SYSTEM_STATUS_TABLE+3]=[SYSTEM_STATUS_TABLE+3]-1;
+ [SYSTEM_STATUS_TABLE+2]=[SYSTEM_STATUS_TABLE+2]-1;
+ alias i R4;
+ i=0;
+ while(i<128) do
+  if([MEMORY_FREE_LIST +i]==0) then
+   [MEMORY_FREE_LIST +i]=1;
+   break;
+  else
+   i=i+1;
+  endif;
+ endwhile;
+R0=i;
+return;
+endif;
+//releasing user area page
+if(functionNum==2) then
+  [MEMORY_FREE_LIST+R2]=[MEMORY_FREE_LIST+R2]-1;
+  if([MEMORY_FREE_LIST+R2]==0) then
+   [SYSTEM_STATUS_TABLE+2]=[SYSTEM_STATUS_TABLE+2]+1;
+  endif;
+  return;
+endif;
+
