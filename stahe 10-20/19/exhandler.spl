@@ -1,0 +1,102 @@
+//breakpoint;
+[PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 9] = -1;
+[PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 13] = SP;
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 11] * 512 - 1;
+backup;
+if(EC==1) then
+ print "ILLEGALINS";
+ print EIP;
+ print EMA;
+ R1=3;
+ R2=[SYSTEM_STATUS_TABLE+1];
+ multipush(R1,R2);
+ call MOD_1;
+ multipop(R1,R2);
+ multipush(R1,R2);
+ call MOD_5;
+ multipop(R1,R2);
+endif;
+if(EC==2) then
+ print "ILLEGALMEM";
+ R1=3;
+ R2=[SYSTEM_STATUS_TABLE+1];
+ multipush(R1,R2);
+ call MOD_1;
+ multipop(R1,R2);
+ multipush(R1,R2);
+ call MOD_5;
+ multipop(R1,R2);
+endif;
+if(EC==3) then
+ print "ARITHMETIC";
+ R1=3;
+ R2=[SYSTEM_STATUS_TABLE+1];
+ multipush(R1,R2);
+ breakpoint;
+ call MOD_1;
+ multipop(R1,R2);
+ multipush(R1,R2);
+ call MOD_5;
+ breakpoint;
+ multipop(R1,R2);
+ breakpoint;
+endif;
+if(EC==0) then
+ if(EPN==4) then
+  multipush(R1,R2);
+  R1=5;
+  R2=[DISK_MAP_TABLE + 10*[SYSTEM_STATUS_TABLE+1] +4];
+  call MOD_2;
+  multipop(R1,R2);
+  [PTBR+8]=R0;
+  [PTBR+9]="1100";
+ endif;
+ if(EPN==5) then
+  multipush(R1,R2);
+  R1=5;
+  R2=[DISK_MAP_TABLE + 10*[SYSTEM_STATUS_TABLE+1] +5];
+  call MOD_2;
+  multipop(R1,R2);
+  breakpoint;
+  [PTBR+10]=R0;
+  [PTBR+11]="1100";
+ endif;
+ if(EPN==6) then
+  multipush(R1,R2);
+  R1=5;
+  R2=[DISK_MAP_TABLE + 10*[SYSTEM_STATUS_TABLE+1] +6];
+  call MOD_2;
+  [PTBR+12]=R0;
+  [PTBR+13]="1100";
+ endif;
+ if(EPN==7) then
+  multipush(R1,R2);
+  R1=5;
+  R3=[DISK_MAP_TABLE + 10*[SYSTEM_STATUS_TABLE+1] +7];
+  call MOD_2;
+  multipop(R1,R2);
+  [PTBR+14]=R0;
+  [PTBR+15]="1100";
+ endif;
+ if(EPN==2) then
+  multipush(R1,R2);
+  R1=1;
+  call MOD_2;
+  multipop(R1,R2);
+  [PTBR+4]=R0;
+  [PTBR+5]="1110";
+ endif;
+ if(EPN==3) then
+  multipush(R1,R2);
+  R1=1;
+  call MOD_2;
+  multipop(R1,R2);
+  [PTBR+6]=R0;
+  [PTBR+7]="1110";
+ endif;
+endif;
+[PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 9]=0;
+restore;
+SP=[PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 13];
+breakpoint;
+ireturn;

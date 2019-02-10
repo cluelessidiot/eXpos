@@ -1,0 +1,45 @@
+[PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 13] = SP;
+alias userSP R0;
+userSP=SP;
+alias currentpid R6;
+currentpid=[SYSTEM_STATUS_TABLE + 1];
+SP =[PROCESS_TABLE+([SYSTEM_STATUS_TABLE+1]*16)+11]*512-1;
+backup;
+
+PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 9]=-1;
+if(EC!=0) then
+  print "Exceptions other than page fault";
+    
+    R1=3;
+    R2=[SYSTEM_STATUS_TABLE+1];
+    call MOD_1;
+    call MOD_5;
+    return;
+endif;
+
+
+if(EPN==2 || EPN==3) then
+     multipush(R0,R1,R2,R3);
+     R1=1;
+    //HEAP
+    call MOD_2;
+    [PTBR+EPN*2] = R0;
+    [PTBR+EPN*2+1] = "1100";
+    multipop(R0,R1,R2,R3);
+endif;
+else
+ if(EPN==5 ||EPN==6 ||EPN==7 )
+ {
+      multipush(R0,R1,R2,R3);
+      R1=1;
+      R2=[SYSTEM_STATUS_TABLE+1];
+      R3=[DISK_MAP_TABLE+EPN];
+      call MOD_2;
+    [PTBR+EPN*2] = R0;
+    [PTBR+EPN*2+1] = "1100";
+    multipop(R0,R1,R2,R3);
+ }   
+PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 9]=0;
+restore;
+SP=[PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 13];
+return;

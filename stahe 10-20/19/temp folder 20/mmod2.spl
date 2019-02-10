@@ -1,0 +1,84 @@
+//MEMMORY MANAGER
+alias functionNum R1;
+if(functionNum==1) then
+ [SYSTEM_STATUS_TABLE+3]=[SYSTEM_STATUS_TABLE+3]+1;
+ while([SYSTEM_STATUS_TABLE+2]==0) do
+  [PROCESS_TABLE+[SYSTEM_STATUS_TABLE+1]*16+4]=WAIT_MEM;
+  multipush(R0,R1,R2);
+  call MOD_5;
+  multipop(R0,R1,R2);
+ endwhile;
+ [SYSTEM_STATUS_TABLE+3]=[SYSTEM_STATUS_TABLE+3]-1;
+ [SYSTEM_STATUS_TABLE+2]=[SYSTEM_STATUS_TABLE+2]-1;
+ alias i R4;
+ i=0;
+ while(i<128) do
+  if([MEMORY_FREE_LIST +i]==0) then
+   [MEMORY_FREE_LIST +i]=1;
+   break;
+  else
+   i=i+1;
+  endif;
+ endwhile;
+R0=i;
+return;
+endif;
+
+//releasing user area page
+if(functionNum==2) then
+  [MEMORY_FREE_LIST+R2]=[MEMORY_FREE_LIST+R2]-1;
+  if([MEMORY_FREE_LIST+R2]==0) then
+   [SYSTEM_STATUS_TABLE+2]=[SYSTEM_STATUS_TABLE+2]+1;
+  endif;
+  return;
+endif;
+
+
+//get code page //ASSUME R10 AS BLOCK NUM
+//RETURN THE PAGE NUMBER THAT HAS BEEN LOADED
+if(functionNum==5) then
+   alias counter R8;
+   alias blocknum R10;
+   counter=0;
+   while(counter<160) do
+     if([DISK_MAP_TABLE+counter]==blocknum) then
+        R0=counter;
+        return;
+     else
+         counter=counter+1;
+     endif;    
+   endwhile;
+   if(counter==160) then
+       multipush(R1,R2,R3,R4,R5,R6);
+       R1=1;
+       call MOD_2;
+       multipop(R1,R2,R3,R4,R5,R6);
+       alias pagenum R9;
+       pagenum=R0;
+      multipush(R0,R1,R2,R3,R4,R5,R6);
+      R1=2;
+
+      R2=[SYSTEM_STATUS_TABLE+1];
+      R3=pagenum;
+      R4=blocknum;
+      call MOD_4;
+    
+    
+      multipop(R0,R1,R2,R3,R4,R5,R6);
+      R0=R9;
+      return;
+         
+  endif;
+endif;
+
+
+//release block function ASSUMES R3 CONTAIN DISK BLOCK
+if(functionNum==4) then
+ [DISK_FREE_LIST+ R3]=[DISK_FREE_LIST+ R3]-1;
+ return; 
+ endif;
+ 
+ 
+ 
+ 
+ 

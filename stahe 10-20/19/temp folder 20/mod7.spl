@@ -1,0 +1,137 @@
+//library
+loadi(63,13);
+loadi(64,14);
+//code
+loadi(65,7);
+loadi(66,8);
+//int=10
+loadi(22,35);
+loadi(23,36);
+//exception
+loadi(2,15);
+loadi(3,16);
+//disk map table
+loadi(61,2);
+//timer
+loadi(4, 17);
+loadi(5, 18);
+//int 7
+loadi(16,29);
+loadi(17,30);
+//idle
+loadi(69,11);
+loadi(70,12);
+//mod5
+loadi(50,63);
+loadi(51,64);
+//exec
+//loadi(83,71);
+//loadi(91,70);
+//MOD_0
+loadi(40,53);
+loadi(41,54);
+//inode_table
+loadi(59,3);
+
+//MOD_4
+loadi(48,61);
+loadi(49,62);
+//cosole_interrupt
+loadi(8,21);
+loadi(9,22);
+//disk_interrupt
+loadi(6,19);
+loadi(7,20);
+//INT_6
+loadi(14,27);
+loadi(15,28);
+//INT_9
+loadi(20,33);
+loadi(21,34);
+//MOD_1
+loadi(42,55);
+loadi(43,56);
+//MOD_2
+loadi(44,57);
+loadi(45,58);
+[DISK_STATUS_TABLE]=0;
+R0=0;
+while(R0<83) do
+[MEMORY_FREE_LIST+R0]=1;
+R0=R0+1;
+endwhile;
+while(R0<128) do
+[MEMORY_FREE_LIST+R0]=0;
+R0=R0+1;
+endwhile;
+[SYSTEM_STATUS_TABLE+2]=45;
+[SYSTEM_STATUS_TABLE+3]=0;
+PTBR=PAGE_TABLE_BASE+20;
+
+
+PTLR=10;
+//Library
+[PTBR+0] = 63;
+[PTBR+1] = "0100";
+[PTBR+2] = 64;
+[PTBR+3] = "0100";
+
+//Heap
+[PTBR+4] = 78;
+[PTBR+5] = "0110";
+[PTBR+6] = 79;
+[PTBR+7] = "0110";
+
+//Code
+[PTBR+8] = 65;
+[PTBR+9] = "0100";
+[PTBR+10] = 66;
+[PTBR+11] = "0100";
+[PTBR+12] = -1;
+[PTBR+13] = "0000";
+[PTBR+14] = -1;
+[PTBR+15] = "0000";
+
+//Stack
+[PTBR+16] = 76;
+[PTBR+17] = "0110";
+[PTBR+18] = 77;
+[PTBR+19] = "0110";
+
+PTBR=PAGE_TABLE_BASE+20;
+PTLR=10;
+[PROCESS_TABLE + 27]=80;
+[PROCESS_TABLE + 17] = 1;
+[PROCESS_TABLE + 20] = CREATED;
+[PROCESS_TABLE + 29] = 8*512;
+[PROCESS_TABLE + 28] = 0;
+[PROCESS_TABLE + 30] = PAGE_TABLE_BASE+20;
+[PROCESS_TABLE + 31] = 10;
+[76*512] = [65*512 +1];
+
+[DISK_STATUS_TABLE+10]=-1;
+[DISK_STATUS_TABLE+12]=-1;
+[DISK_STATUS_TABLE+13]=-1;
+[DISK_STATUS_TABLE+14]=65;
+[DISK_STATUS_TABLE+15]=66;
+[DISK_STATUS_TABLE+16]=-1;
+[DISK_STATUS_TABLE+17]=-1;
+[DISK_STATUS_TABLE+18]=76;
+[DISK_STATUS_TABLE+19]=77;
+
+[PROCESS_TABLE + 32+4]=TERMINATED;
+[PROCESS_TABLE + 48+4]=TERMINATED;
+[PROCESS_TABLE + 64+4]=TERMINATED;
+[PROCESS_TABLE + 80+4]=TERMINATED;
+[PROCESS_TABLE + 96+4]=TERMINATED;
+[PROCESS_TABLE + 112+4]=TERMINATED;
+[PROCESS_TABLE + 128+4]=TERMINATED;
+[PROCESS_TABLE + 144+4]=TERMINATED;
+[PROCESS_TABLE + 160+4]=TERMINATED;
+[PROCESS_TABLE + 176+4]=TERMINATED;
+[PROCESS_TABLE + 192+4]=TERMINATED;
+[PROCESS_TABLE + 208+4]=TERMINATED;
+[PROCESS_TABLE + 224+4]=TERMINATED;
+[PROCESS_TABLE + 240+4]=TERMINATED;
+
+return;

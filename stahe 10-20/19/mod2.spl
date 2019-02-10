@@ -1,0 +1,84 @@
+alias functionNum R1;
+if(functionNum==1) then
+ [SYSTEM_STATUS_TABLE+3]=[SYSTEM_STATUS_TABLE+3]+1;
+ while([SYSTEM_STATUS_TABLE+2]==0) do
+  [PROCESS_TABLE+[SYSTEM_STATUS_TABLE+1]*16+4]=WAIT_MEM;
+  multipush(R0,R1,R2);
+  call MOD_5;
+  multipop(R0,R1,R2);
+ endwhile;
+ [SYSTEM_STATUS_TABLE+3]=[SYSTEM_STATUS_TABLE+3]-1;
+ [SYSTEM_STATUS_TABLE+2]=[SYSTEM_STATUS_TABLE+2]-1;
+ alias i R4;
+ i=0;
+ while(i<128) do
+  if([MEMORY_FREE_LIST +i]==0) then
+   [MEMORY_FREE_LIST +i]=1;
+   break;
+  else
+   i=i+1;
+  endif;
+ endwhile;
+R0=i;
+return;
+endif;
+////
+if(functionNum==2) then
+  [MEMORY_FREE_LIST+R2]=[MEMORY_FREE_LIST+R2]-1;
+  if([MEMORY_FREE_LIST+R2]==0) then
+   [SYSTEM_STATUS_TABLE+2]=[SYSTEM_STATUS_TABLE+2]+1;
+  endif;
+  return;
+endif;
+if(functionNum==5) then
+  R3=1;
+  while(R3<16) do
+   if([DISK_MAP_TABLE+R3*10+4]==R2) then
+    R0=[PAGE_TABLE_BASE+20*R3+8];
+    if(R0!=-1 && [PAGE_TABLE_BASE+20*R3+9]=="0110") then
+    [MEMORY_FREE_LIST+R0]=[MEMORY_FREE_LIST+R0]+1;
+    endif;
+    return;
+   endif;
+   if([DISK_MAP_TABLE+R3*10+5]==R2) then
+    R0=[PAGE_TABLE_BASE+20*R3+10];
+    if(R0!=-1 && [PAGE_TABLE_BASE+20*R3+11]=="0110") then
+    [MEMORY_FREE_LIST+R0]=[MEMORY_FREE_LIST+R0]+1;
+    endif;
+    return;
+   endif;
+   if([DISK_MAP_TABLE+R3*10+6]==R2) then
+    R0=[PAGE_TABLE_BASE+20*R3+12];
+    if(R0!=-1 && [PAGE_TABLE_BASE+20*R3+13]=="0110") then
+    [MEMORY_FREE_LIST+R0]=[MEMORY_FREE_LIST+R0]+1;
+    endif;
+    return;
+   endif;
+   if([DISK_MAP_TABLE+R3*10+7]==R2) then
+    R0=[PAGE_TABLE_BASE+20*R3+14];
+    if(R0!=-1 && [PAGE_TABLE_BASE+20*R3+15]=="0110") then
+    [MEMORY_FREE_LIST+R0]=[MEMORY_FREE_LIST+R0]+1;
+    endif;
+    return;
+   endif;
+  R3=R3+1;
+  endwhile;
+ multipush(R1,R2);
+ R1=1;
+ call MOD_2;
+ multipop(R1,R2);
+ R5=R0;
+ multipush(R0,R1,R2,R5);
+ R1=2;
+ R4=R2;
+ R2=[SYSTEM_STATUS_TABLE+1];
+ R3=R0;
+ call MOD_4;
+ multipop(R0,R1,R2,R5);
+ R0=R5;
+ return;
+endif;
+if(functionNum==4) then
+ [DISK_FREE_LIST+R2]=[DISK_FREE_LIST+R2]-1;
+ return;
+endif;
