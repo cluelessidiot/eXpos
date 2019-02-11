@@ -1,0 +1,77 @@
+alias userSP R8;
+userSP = SP;
+[PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 9] = 8;
+[PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 13] = SP;
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 11] * 512 - 1;
+R1=1;
+call MOD_1;
+if(R0==-1) then
+[[PTBR+2*([PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 13]-1)/512]*512+([PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 13]-1)%512]=-1;
+[PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 9] = 0;
+SP=[PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 13];
+ireturn;
+else
+//breakpoint;
+R3=R0;
+alias childPID R3;
+alias child_process_table R4;
+child_process_table=PROCESS_TABLE+childPID*16;
+multipush(R3,R4);
+R1=1;
+call MOD_2;
+multipop(R3,R4);
+[child_process_table+3]=[PROCESS_TABLE+[SYSTEM_STATUS_TABLE+1]*16 +3]; //userid
+[child_process_table+6]=[PROCESS_TABLE+[SYSTEM_STATUS_TABLE+1]*16 +6]; //swapflag
+[child_process_table+10]=[PROCESS_TABLE+[SYSTEM_STATUS_TABLE+1]*16 +10];//userareaswap status
+[child_process_table+7]=[PROCESS_TABLE+[SYSTEM_STATUS_TABLE+1]*16 +7];//inode_index
+[child_process_table+13]=[PROCESS_TABLE+[SYSTEM_STATUS_TABLE+1]*16 +13];//uptr
+[child_process_table+12]=0;//KPTR
+[child_process_table+0]=0;//TICK
+[child_process_table+9]=0;//MODEFLAG
+[child_process_table+2]=[SYSTEM_STATUS_TABLE+1];//ppid
+[child_process_table+11]=R0;//abovefx
+[child_process_table +4]=CREATED;//state
+R5=0;
+//perprocess disk amp table
+while(R5<10) do
+[DISK_MAP_TABLE+childPID*10 +R5]=[DISK_MAP_TABLE+[SYSTEM_STATUS_TABLE+1]*10 +R5];
+R5=R5+1;
+endwhile;
+//page table
+R5=0;
+while(R5<16) do
+[PAGE_TABLE_BASE +childPID*20 +R5]=[PTBR+R5];
+R7=R5%2;
+if(R5!=0 || [PTBR+R5]==-1) then
+[MEMORY_FREE_LIST + [PTBR+R5]]=[MEMORY_FREE_LIST + [PTBR+R5]]+1;
+endif;
+R5=R5+1;
+endwhile;
+//allocating for stack
+multipush(R3,R4);
+R1=1;
+call MOD_2;
+multipop(R3,R4);
+[PAGE_TABLE_BASE +childPID*20 +16]=R0;
+[PAGE_TABLE_BASE +childPID*20 +17]=[PTBR+17];
+multipush(R3,R4);
+R1=1;
+call MOD_2;
+multipop(R3,R4);
+[PAGE_TABLE_BASE +childPID*20 +18]=R0;
+[PAGE_TABLE_BASE +childPID*20 +19]=[PTBR+19];
+R5=0;
+//copying statck 
+while(R5<512) do
+[[PAGE_TABLE_BASE +childPID*20 +16]*512 +R5]=[[PTBR+16]*512+R5];
+[[PAGE_TABLE_BASE +childPID*20 +18]*512 +R5]=[[PTBR+18]*512+R5];
+R5=R5+1;
+endwhile;
+[[child_process_table +11]*512]=BP;
+[[PTBR+2*([PROCESS_TABLE+([SYSTEM_STATUS_TABLE+1]*16)+13]-1)/512]*512+([PROCESS_TABLE+([SYSTEM_STATUS_TABLE + 1]*16)+13]-1)%512]=childPID;
+[[[child_process_table+14] + 2*([PROCESS_TABLE +childPID*16+13]-1)/512]*512+([PROCESS_TABLE+childPID*16+13]-1)%512]=0;
+[PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 9] = 0;
+SP=[PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 13];
+endif;
+//breakpoint;
+ireturn;

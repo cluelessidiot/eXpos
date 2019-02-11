@@ -1,0 +1,93 @@
+#!/bin/bash
+cd $HOME/myexpos/spl
+echo OSSTARTUP....
+./spl ../current/os.spl
+echo TIMER
+./spl ../current/timer.spl
+echo MOD0....
+./spl  ../current/mod0.spl
+echo MOD1
+./spl ../current/mod1.spl
+echo MOD2
+./spl ../current/mod2.spl
+echo MOD4....
+./spl  ../current/mod4.spl
+echo MOD5....
+./spl  ../current/mod5.spl
+echo MOD7....
+./spl  ../current/mod7.spl
+echo CONSOLEINT....
+./spl  ../current/intconsole.spl
+echo DISKINT
+./spl ../current/intdisk.spl
+echo exhandle
+./spl ../current/exhandler.spl
+echo INT4....
+./spl  ../current/int4.spl
+echo INT5....
+./spl  ../current/int5.spl
+echo INT6....
+./spl  ../current/int6.spl
+echo INT7....
+./spl ../current/int7.spl
+echo INT8....
+./spl ../current/int8.spl
+echo INT9
+./spl ../current/int9.spl
+echo INT10....
+./spl  ../current/int10.spl
+echo INT11....
+./spl  ../current/int11.spl
+echo INT13....
+./spl  ../current/int13.spl
+echo INT14....
+./spl  ../current/int14.spl
+echo INT15....
+./spl  ../current/int15.spl
+cd $HOME/myexpos/xfs-interface
+echo --OS--
+./xfs-interface load --os ../current/os.xsm
+echo --IDLE--
+./xfs-interface load --idle ../current/idle.xsm
+echo --TIMER--
+./xfs-interface load --int=timer ../current/timer.xsm
+echo --CONSOLE--
+./xfs-interface load --int=console ../current/intconsole.xsm
+echo --DISK--
+./xfs-interface load --int=disk ../current/intdisk.xsm
+echo --EXHANDLER--
+./xfs-interface load --exhandler ../current/exhandler.xsm
+echo --INT4--
+./xfs-interface load --int=4 ../current/int4.xsm
+echo --INT5--
+./xfs-interface load --int=5 ../current/int5.xsm
+echo --INT6--
+./xfs-interface load --int=6 ../current/int6.xsm
+echo --INT7--
+./xfs-interface load --int=7 ../current/int7.xsm
+echo --INT8--
+./xfs-interface load --int=8 ../current/int8.xsm
+echo --INT9--
+./xfs-interface load --int=9 ../current/int9.xsm
+echo --INT10--
+./xfs-interface load --int=10 ../current/int10.xsm
+echo --INT11--
+./xfs-interface load --int=11 ../current/int11.xsm
+echo --INT13--
+./xfs-interface load --int=13 ../current/int13.xsm
+echo --INT14--
+./xfs-interface load --int=14 ../current/int14.xsm
+echo --INT15--
+./xfs-interface load --int=15 ../current/int15.xsm
+echo --MOD0--
+./xfs-interface load --module 0 ../current/mod0.xsm
+echo --MOD1--
+./xfs-interface load --module 1 ../current/mod1.xsm
+echo --MOD2--
+./xfs-interface load --module 2 ../current/mod2.xsm
+echo --MOD4--
+./xfs-interface load --module 4 ../current/mod4.xsm
+echo --MOD5--
+./xfs-interface load --module 5 ../current/mod5.xsm
+echo --MOD7--
+./xfs-interface load --module 7 ../current/mod7.xsm
