@@ -1,0 +1,96 @@
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 9] = 8;
+alias userSP R4;
+userSP = SP;
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 13] = userSP;
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 11]*512 - 1;
+alias retValAdd R5;
+retValAdd = ([PTBR + 2*((userSP - 1) / 512)]*512) + ((userSP - 1) % 512);
+multipush(R4,R5);
+R1 = 1;
+call MOD_1;
+multipop(R4,R5);
+//print "kitti";
+if(R0 == -1) then
+	[retValAdd] = -1;
+	[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 9] = 0;
+	SP = userSP;
+	ireturn;
+else
+	alias childPID R6;
+	childPID = R0;
+	multipush(R4,R5,R6);
+	R1 = 1;
+	call MOD_2;
+	multipop(R4,R5,R6);
+	alias p1 R7;
+	alias p2 R8;
+	p1 = [PROCESS_TABLE + (childPID*16) + 14];
+	p2 = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 14];
+	[p1 + 16] = R0;
+	[p1 + 17] = [p2 + 17];
+	multipush(R4,R5,R6,R7,R8);
+	R1 = 1;
+	call MOD_2;
+	multipop(R4,R5,R6,R7,R8);
+	[p1 + 18] = R0;
+	[p1 + 19] = [p2 + 19];
+	multipush(R4,R5,R6,R7,R8);
+	R1 = 1;
+	call MOD_2;
+	multipop(R4,R5,R6,R7,R8);
+	[PROCESS_TABLE + (childPID*16) + 11] = R0;
+	[PROCESS_TABLE + (childPID*16) + 3] = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 3];
+	[PROCESS_TABLE + (childPID*16) + 6] = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 6];
+	[PROCESS_TABLE + (childPID*16) + 7] = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 7];
+	[PROCESS_TABLE + (childPID*16) + 10] = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 10];
+	[PROCESS_TABLE + (childPID*16) + 13] = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 13];
+	[PROCESS_TABLE + (childPID*16) + 9] = 0;
+	[PROCESS_TABLE + (childPID*16) + 12] = 0;
+	[PROCESS_TABLE + (childPID*16) + 0] = 0;
+	[PROCESS_TABLE + (childPID*16) + 2] = [SYSTEM_STATUS_TABLE + 1];
+	[PROCESS_TABLE + (childPID*16) + 4] = CREATED;
+	alias i R9;
+	R10 = ([PROCESS_TABLE + (childPID*16) + 11]*512) + 496;
+	R11 = ([PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 11]*512) + 496;
+	i = 0;
+	while(i < 8) do
+		[R10 + (2*i)] = [R11 + (2*i)];
+		[R10 + (2*i) + 1] = [R11 + (2*i) + 1];
+		if([R10 + (2*i)] == 1) then
+			[SEMAPHORE_TABLE + (4*[R10 + (2*i) + 1]) + 1] = [SEMAPHORE_TABLE + (4*[R10 + (2*i) + 1]) + 1] + 1;
+		endif;
+		i = i + 1;
+	endwhile;
+	i = 0;
+	while(i < 10) do
+		[DISK_MAP_TABLE + (childPID*10) + i] = [DISK_MAP_TABLE + ([SYSTEM_STATUS_TABLE + 1]*10) + i];
+		i = i + 1;
+	endwhile;
+	i = 0;
+	while(i < 16) do
+		[p1 + i] = [p2 + i];
+		if((i % 2) == 0) then
+			[MEMORY_FREE_LIST + [p1 + i]] = [MEMORY_FREE_LIST + [p1 + i]] + 1;
+		endif;
+		i = i + 1;
+	endwhile;
+	i = 0;
+	while(i < 512) do
+		[([p1 + 16]*512) + i] = [([p2 + 16]*512) + i];
+		[([p1 + 18]*512) + i] = [([p2 + 18]*512) + i];
+		i = i + 1;
+	endwhile;
+	SP = [PROCESS_TABLE + (childPID*16) + 11]*512 - 1; 
+	multipush(BP);
+	//print "childpid";
+	//print childPID;
+	[retValAdd] = childPID;
+	userSP = [PROCESS_TABLE + (childPID*16) + 13];
+	PTBR = [PROCESS_TABLE + (childPID*16) + 14];
+	retValAdd = ([PTBR + 2*((userSP - 1) / 512)]*512) + ((userSP - 1) % 512);
+	[retValAdd] = 0;
+	[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 9] = 0;
+	PTBR = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 14];
+	SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 13];
+	ireturn;
+endif;

@@ -1,0 +1,23 @@
+alias userSP R1;
+userSP = SP;
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 13] = SP;
+alias sysCallNum R2;
+sysCallNum = [([PTBR + 2*((userSP - 5) / 512)]*512) + ((userSP - 5) % 512)];
+alias retValAdd R3;
+retValAdd = ([PTBR + 2*((userSP - 1) / 512)]*512) + ((userSP - 1) % 512);
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 11]*512 - 1;
+alias fileName R4;
+R4 = [([PTBR + 2*((userSP - 4) / 512)]*512) + ((userSP - 4) % 512)];
+
+if(sysCallNum == 2) then
+    [PROCESS_TABLE+[SYSTEM_STATUS_TABLE+1]*16+9] = 2;
+    R5 = [PROCESS_TABLE+[SYSTEM_STATUS_TABLE+1]*16+11];
+    R5=R5+496;
+    R6=0;
+    while(496+R6<512) do
+        if([R6+R5]==-1) then 
+            break;
+        endif;
+        R6=R6+2;
+    endwhile;
+    if()
