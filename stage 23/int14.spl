@@ -1,0 +1,56 @@
+alias userSP R1;
+userSP = SP;
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 13] = SP;
+alias sysCallNum R2;
+sysCallNum = [([PTBR + 2*((userSP - 5) / 512)]*512) + ((userSP - 5) % 512)];
+alias retValAdd R3;
+retValAdd = ([PTBR + 2*((userSP - 1) / 512)]*512) + ((userSP - 1) % 512);
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 11]*512 - 1;
+if(sysCallNum == 19) then
+	[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 9] = 19;
+	R5 = [([PTBR + 2*((userSP - 4) / 512)]*512) + ((userSP - 4) % 512)];
+	R4 = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 11]*512 + 496;
+	if((R5 < 0) || (R5 > 7) || ([R4 + (2*R5)] != 1)) then
+		[retValAdd] = -1;
+	else
+		while(([SEMAPHORE_TABLE + (4*[R4 + (2*R5) + 1])] != [SYSTEM_STATUS_TABLE + 1]) && ([SEMAPHORE_TABLE + (4*[R4 + (2*R5) + 1])] != -1)) do
+			[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 4] = WAIT_SEMAPHORE;
+			[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 5] = [R4 + (2*R5) + 1];
+			multipush(R1,R2,R3,R4,R5);
+			call MOD_5;
+			multipop(R1,R2,R3,R4,R5);
+		endwhile;
+		[SEMAPHORE_TABLE + (4*[R4 + (2*R5) + 1])] = [SYSTEM_STATUS_TABLE + 1];
+		[retValAdd] = 0;
+	endif;	
+	[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 9] = 0;
+	SP = userSP;
+	ireturn;
+endif;
+if(sysCallNum == 20) then
+	[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 9] = 20;
+	R5 = [([PTBR + 2*((userSP - 4) / 512)]*512) + ((userSP - 4) % 512)];
+	R4 = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 11]*512 + 496;
+	if((R5 < 0) || (R5 > 7) || ([R4 + (2*R5)] != 1)) then
+		[retValAdd] = -1;
+	else
+		if([SEMAPHORE_TABLE + (4*[R4 + (2*R5) + 1])] != -1) then
+			if([SEMAPHORE_TABLE + (4*[R4 + (2*R5) + 1])] != [SYSTEM_STATUS_TABLE + 1]) then
+				[retValAdd] = -2;
+			else
+				[SEMAPHORE_TABLE + (4*[R4 + (2*R5) + 1])] = -1;
+				R6 = 0;
+				while(R6 < 16) do
+					if(([PROCESS_TABLE + (R6*16) + 4] == WAIT_SEMAPHORE) && ([PROCESS_TABLE + (R6*16) + 5] == [R4 + (2*R5) + 1])) then
+						[PROCESS_TABLE + (R6*16) + 4] = READY;
+					endif;
+					R6 = R6 + 1;
+				endwhile;
+				[retValAdd] = 0;
+			endif;
+		endif;
+	endif;
+	[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 9] = 0;
+	SP = userSP;
+	ireturn;	
+endif;

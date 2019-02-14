@@ -1,0 +1,55 @@
+alias userSP R1;
+userSP = SP;
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 13] = SP;
+alias sysCallNum R2;
+sysCallNum = [([PTBR + 2*((userSP - 5) / 512)]*512) + ((userSP - 5) % 512)];
+alias retValAdd R3;
+retValAdd = ([PTBR + 2*((userSP - 1) / 512)]*512) + ((userSP - 1) % 512);
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 11]*512 - 1;
+//print "int11";
+if(sysCallNum == 13) then
+	[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 9] = 13;
+	R4 = [([PTBR + 2*((userSP - 4) / 512)]*512) + ((userSP - 4) % 512)];
+	if((R4 == [SYSTEM_STATUS_TABLE + 1]) || ([PROCESS_TABLE + (R4*16) + 4] == TERMINATED) || (R4 > 15) || (R4 < 0)) then
+		[retValAdd] = -1;
+		[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 9] = 0;
+		SP = userSP;
+		ireturn;
+	else
+		[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 4] = WAIT_PROCESS;
+		[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 5] = R4;
+		multipush(R1,R2,R3,R4);
+		call MOD_5;
+		multipop(R1,R2,R3,R4);
+		[retValAdd] = 0;
+		[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 9] = 0;
+		SP = userSP;
+		ireturn;
+	endif;
+endif;
+if(sysCallNum == 14) then
+	[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 9] = 14;
+	R5 = 0;
+	while(R5 < 16) do
+		if(([PROCESS_TABLE + (R5*16) + 4] == WAIT_PROCESS) && ([PROCESS_TABLE + (R5*16) + 5] == [SYSTEM_STATUS_TABLE + 1])) then
+			[PROCESS_TABLE + (R5*16) + 4] = READY;
+		endif;
+		R5 = R5 + 1;
+	endwhile;
+	[retValAdd] = 0;
+	[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 9] = 0;
+	SP = userSP;
+	ireturn;
+endif;
+if(sysCallNum == 11) then
+	[retValAdd] = [SYSTEM_STATUS_TABLE + 1];
+	[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 9] = 0;
+	SP = userSP;
+	ireturn;
+endif;
+if(sysCallNum == 12) then
+	[retValAdd] = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 2];
+	[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 9] = 0;
+	SP = userSP;
+	ireturn;
+endif;

@@ -1,0 +1,157 @@
+alias userSP R1;
+userSP = SP;
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 13] = SP;
+alias sysCallNum R2;
+sysCallNum = [([PTBR + 2*((userSP - 5) / 512)]*512) + ((userSP - 5) % 512)];
+alias retValAdd R3;
+retValAdd = ([PTBR + 2*((userSP - 1) / 512)]*512) + ((userSP - 1) % 512);
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 11]*512 - 1;
+R4 = [([PTBR + 2*((userSP - 4) / 512)]*512) + ((userSP - 4) % 512)];
+R10 = PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 9;
+if(sysCallNum == 1) then
+	[R10] = 1;
+	R5 = 0;
+	//search inode table to find if entry is already present
+	while(R5 < 60) do
+		if(([INODE_TABLE + (R5*16)] == DATA) && ([INODE_TABLE + (R5*16) + 1] == R4)) then
+			break;
+		endif;
+		R5 = R5 + 1;
+	endwhile;
+	if(R5 != 60) then
+		[retValAdd] = 0;
+		[R10] = 0;
+		SP = userSP;
+		ireturn;
+	else
+		R6 = 0;
+//find free entry in inode table
+		while(R6 < 60) do
+			if([INODE_TABLE + (R6*16) + 1] == -1) then
+				break;
+			endif;
+			R6 = R6 + 1;
+		endwhile;
+		if(R6 == 60) then
+			[retValAdd] = -1;
+			[R10] = 0;
+			SP = userSP;
+			ireturn;	
+		else
+//setting name,type,size to 0,and data part to -1
+			
+			[INODE_TABLE + (R6*16) + 1] = R4;
+			[INODE_TABLE + (R6*16)] = DATA;
+			[INODE_TABLE + (R6*16) + 2] = 0;
+			R7 = 8;
+			while(R7 <= 11) do
+				[INODE_TABLE + (R6*16) + R7] = -1;
+				R7 = R7 + 1;
+			endwhile;
+			//setting user id....
+			R7 = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 3];
+			[INODE_TABLE + (R6*16) + 3] = R7;
+			//setting permission......
+			R7 = [([PTBR + 2*((userSP - 3) / 512)]*512) + ((userSP - 3) % 512)];
+			[INODE_TABLE + (R6*16) + 4] = R7;
+			//setting root file
+			//setting permisiion
+			R11 = ROOT_FILE + (R6*8);
+			[R11] = R4;
+			//file size and data
+			[R11 + 1] = 0;
+			[R11 + 2] = DATA;
+			//abstracting username from usertable
+			R8 = [USER_TABLE + (2*[INODE_TABLE + (R6*16) + 3])];
+			[R11 + 3] = R8;
+			[R11 + 4] = R7;
+			[retValAdd] = 0;
+			[R10] = 0;
+			SP = userSP;
+			ireturn;
+		endif;	
+	endif;	
+endif;
+//deleting a file
+if(sysCallNum == 4) then
+	[R10] = 4;
+	R5 = 0;
+	while(R5 < 60) do
+		if([INODE_TABLE + (R5*16) + 1] == R4) then
+			break;
+		endif;
+		R5 = R5 + 1;
+	endwhile;
+	if(R5 == 60) then
+		[retValAdd] = 0;
+		[R10] = 0;
+		SP = userSP;
+		ireturn;
+	else
+		if([INODE_TABLE + (R5*16)] != DATA) then
+			[retValAdd] = -1;
+			[R10] = 0;
+			SP = userSP;
+			ireturn;
+		endif;
+		R9 = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 3];
+		//if current user is not root and user doesnt own the file then return 
+	 	    //permisision			//userid         //userid in inode table
+		if(([INODE_TABLE + (R5*16) + 4] == 0) && (R9 != 1) && ([INODE_TABLE + (R5*16) + 3] != R9)) then
+			[retValAdd] = -1;
+			[R10] = 0;
+			SP = userSP;
+			ireturn;
+		endif;
+		//acquire a lock on file by acquire inode fx
+		multipush(R1,R2,R3,R4,R5);
+		R1 = 4;
+		R2 = R5;
+		R3 = [SYSTEM_STATUS_TABLE + 1];
+		call MOD_0;
+		multipop(R1,R2,R3,R4,R5);
+		//file is open.....
+		if([FILE_STATUS_TABLE + (4*R5) + 1] != -1) then
+			multipush(R1,R2,R3,R4,R5);
+			R1 = 5;
+			R2 = R5;
+			R3 = [SYSTEM_STATUS_TABLE + 1];
+			call MOD_0;
+			multipop(R1,R2,R3,R4,R5);
+			[retValAdd] = -2;
+			[R10] = 0;
+			SP = userSP;
+			ireturn;
+		endif;
+		R6 = 8;
+		while(R6 <= 11) do
+			R8 = [INODE_TABLE + (R5*16) + R6];
+			if(R8 != -1) then
+				R7 = [INODE_TABLE + (R5*16) + R6] % 4;
+				if(([BUFFER_TABLE + (4*R7)] == R8) && ([BUFFER_TABLE + (4*R7) + 1] == 1)) then
+					[BUFFER_TABLE + (4*R7) + 1] = 0;
+				endif;
+				multipush(R1,R2,R3,R4,R5,R6,R7);
+				R1 = 4;
+				R2 = R8;
+				R3 = [SYSTEM_STATUS_TABLE + 1];
+				call MOD_2;
+				multipop(R1,R2,R3,R4,R5,R6,R7);
+				R8 = -1;
+			endif;			
+			R6 = R6 + 1;
+		endwhile;
+		[INODE_TABLE + (R5*16) + 1] = -1;
+		[ROOT_FILE + (R5*8)] = -1;
+		multipush(R1,R2,R3,R4,R5);
+		R1 = 5;
+		R2 = R5;
+		R3 = [SYSTEM_STATUS_TABLE + 1];
+		call MOD_0;
+		multipop(R1,R2,R3,R4,R5);
+		[retValAdd] = 0;
+		[R10] = 0;
+		SP = userSP;
+		ireturn;
+	endif;
+endif;
