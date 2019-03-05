@@ -1,0 +1,70 @@
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 13] = SP;
+alias userSP R0;
+userSP=SP;
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 11]*512 - 1;
+alias PhysicalPageNum R1;							//Extracting arguement 
+alias offset R2;
+alias CallNumAdd R3;
+PhysicalPageNum = [PTBR + 2 * ((userSP - 5)/ 512)];
+offset = (userSP - 5) % 512;
+CallNumAdd = (PhysicalPageNum * 512) + offset;
+alias SyscallNumber R4;
+SyscallNumber=[CallNumAdd];
+if (SyscallNumber == 11) then				//Getpid
+	PhysicalPageNum = [PTBR + 2 * ((userSP - 1)/ 512)];				//return address
+	offset = (userSP - 1) % 512;
+	CallNumAdd = (PhysicalPageNum * 512) + offset;
+	[CallNumAdd] = [SYSTEM_STATUS_TABLE + 1];
+	SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 13];
+	ireturn;
+endif;
+if (SyscallNumber == 12) then				//Getppid
+	PhysicalPageNum = [PTBR + 2 * ((userSP - 1)/ 512)];				//return address
+	offset = (userSP - 1) % 512;
+	CallNumAdd = (PhysicalPageNum * 512) + offset;
+	[CallNumAdd] = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 2];
+	SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 13];
+	ireturn;
+endif;
+if (SyscallNumber == 13) then				//Wait
+	[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 9] = 13;
+	PhysicalPageNum = [PTBR + 2 * ((userSP - 4)/ 512)];				//get pid from user stack
+	offset = (userSP - 4) % 512;
+	CallNumAdd = (PhysicalPageNum * 512) + offset;
+	alias pid R5;
+	pid = [CallNumAdd];
+	PhysicalPageNum = [PTBR + 2 * ((userSP - 1)/ 512)];				//return address
+	offset = (userSP - 1) % 512;
+	CallNumAdd = (PhysicalPageNum * 512) + offset;
+	if (pid == [SYSTEM_STATUS_TABLE + 1] || [PROCESS_TABLE + (pid * 16) + 4] == TERMINATED || (pid < 0 && pid >= 16)) then
+		[CallNumAdd] = -1;				//Error
+	else
+		[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 4] = WAIT_PROCESS;
+		[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 5] = pid;
+		multipush(R0,R1,R2,R3,R4,R5);
+		call MOD_5;
+		multipop(R0,R1,R2,R3,R4,R5);
+		[CallNumAdd] = 0;
+	endif;
+	[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 9] = 0;
+	SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 13];
+	ireturn;
+endif;
+if (SyscallNumber == 14) then				//Signal
+	[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 9] = 14;
+	alias counter R5;
+	counter = 1;
+	while (counter < 16) do
+		if ([PROCESS_TABLE + (counter * 16) + 4] == WAIT_PROCESS && [PROCESS_TABLE + (counter * 16) + 5] == [SYSTEM_STATUS_TABLE + 1]) then
+			[PROCESS_TABLE + (counter * 16) + 4] = READY;
+		endif;
+		counter = counter + 1;
+	endwhile;
+	[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 9] = 0;
+	SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 13];
+	PhysicalPageNum = [PTBR + 2 * ((userSP - 1)/ 512)];				//return address
+	offset = (userSP - 1) % 512;
+	CallNumAdd = (PhysicalPageNum * 512) + offset;
+	[CallNumAdd] = 0;
+	ireturn;
+endif;
