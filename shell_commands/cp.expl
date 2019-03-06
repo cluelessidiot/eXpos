@@ -1,0 +1,33 @@
+int main()
+{
+	decl
+		int temp, perm,i1,i2,filedesc1,filedesc2;
+		str fname1,fname2,buff; 
+	enddecl
+	begin
+		temp = exposcall("Write",-2,"entr file1");
+		read(fname1);
+		temp = exposcall("Write",-2,"entr file2");
+		read(fname2);
+		filedesc1 = exposcall("Open",fname1);
+		if(filedesc1 < 0) then
+			write("Errorin f1!");
+		endif;
+		filedesc2 = exposcall("Open",fname2);
+		if(filedesc2 < 0) then
+			write("Error in f2!");
+		endif;
+		
+		while(1 == 1) do 
+			i1 = exposcall("Read",filedesc1,buff);
+			if (i1==-2) then
+				break;
+			endif;
+			i2= exposcall("Write",filedesc2,buff);
+			if (i2==-2) then
+				break;
+			endif;
+		endwhile;
+		return 0;
+	end
+}
