@@ -1,0 +1,30 @@
+int main()
+{
+	decl
+		int temp, perm,i,filedesc;
+		str uname,buff,buff2; 
+	enddecl
+	begin
+		temp = exposcall("Write",-2,"entr uname");
+		read(uname);
+		i=0;
+		filedesc = exposcall("Open","root");
+		while(i<60) do
+			temp=exposcall("Read",filedesc,buff);
+			if(buff!="-1") then
+				temp= exposcall("Seek",filedesc,2);
+				temp=exposcall("Read",filedesc,buff2);
+				if(buff2==uname) then
+					temp = exposcall("Delete", buff);
+					temp= exposcall("Seek",filedesc,4);
+					i=i+1;
+					continue;
+				endif;
+				temp= exposcall("Seek",filedesc,-3);	
+			endif;			
+			temp= exposcall("Seek",filedesc,7);
+			i=i+1;
+		endwhile;
+		return 0;
+	end
+}
