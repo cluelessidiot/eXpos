@@ -1,0 +1,18 @@
+int main()
+{
+	decl
+		int temp, perm;
+		str pname; 
+	enddecl
+	begin
+		read(pname);
+		temp = exposcall("Delete", pname);
+		if(temp==-1) then
+			write("no permission");
+		endif;
+		if(temp==-2) then
+			write("file is open");
+		endif;
+		return 0;
+	end
+}
