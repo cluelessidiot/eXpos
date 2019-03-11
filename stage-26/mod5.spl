@@ -1,0 +1,44 @@
+alias currentpid R0;
+currentpid = [SYSTEM_STATUS_TABLE + 1];
+multipush(BP);
+[PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 12] = SP%512;
+[PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 14] = PTBR;
+[PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 15] = PTLR;
+alias flag R1;
+alias pid R2;
+flag = 0;
+pid = currentpid + 1;
+while (pid < 16) do
+	if ([PROCESS_TABLE + (pid * 16) + 4] == READY || [PROCESS_TABLE + (pid * 16) + 4] == CREATED) then
+		flag = 1;
+		break;
+	endif;
+	pid = pid + 1;
+endwhile;
+if (flag == 0) then
+	pid = 1;
+	while (pid <= currentpid) do
+		if ([PROCESS_TABLE + (pid * 16) + 4] == READY || [PROCESS_TABLE + (pid * 16) + 4] == CREATED) then
+		flag = 1;
+		break;
+	endif;
+	pid = pid + 1;
+	endwhile;
+endif;
+if (flag == 0) then 
+	pid = 0;
+endif;
+[SYSTEM_STATUS_TABLE + 1] = pid;
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 11] * 512 + [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 12];
+PTBR = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 14];
+PTLR = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 15];
+if ([PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 4] == CREATED) then
+	BP = [[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 11]*512];
+	SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 13];
+	[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 4] = RUNNING;
+	[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 9] = 0;
+	ireturn;
+endif;
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 4] = RUNNING;
+multipop(BP);
+return;

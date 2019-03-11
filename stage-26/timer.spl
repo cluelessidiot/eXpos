@@ -1,0 +1,18 @@
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 13] = SP;
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 11] * 512 - 1;
+backup;
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 4] = READY;
+alias count R0;
+count = 0;
+while(count < 256) do
+	[PROCESS_TABLE + count] = [PROCESS_TABLE + count] + 1;
+	count = count + 16;
+endwhile;
+call MOD_5;
+restore;
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 13];
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 9] = 0;
+//print([SYSTEM_STATUS_TABLE + 1]);
+//print("timer");
+breakpoint;
+ireturn;
