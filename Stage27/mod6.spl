@@ -1,0 +1,215 @@
+alias functionNum R1;
+alias currentPID R2;
+if (functionNum == 1) then			//Swap out
+	[SYSTEM_STATUS_TABLE + 5] = currentPID;
+	alias counter R3;
+	alias flag1 R4;
+	alias flag2 R5;
+	alias max R6;
+	alias index R7;
+	alias temp R8;
+	counter = 3;
+	flag1 = -1;
+	flag2 = -1;
+	index = -1;
+	max = 0;
+	while(counter < 16) do
+		temp = PROCESS_TABLE + counter * 16;
+		if([temp + 4] == WAIT_PROCESS) then
+			flag1 = 1;
+			index = counter;
+		else
+			if ([temp + 4] == WAIT_TERMINAL && flag1 == -1) then
+				flag2 = 1;
+				index = counter;
+			else
+				if ([temp+6] != 1 && [temp+4] != RUNNING && [temp+4] != READY && [temp+4] != WAIT_MEM && [temp] > max && flag1 == -1 && flag2 == -1) then
+					max = [temp];
+					index = counter;
+				endif;
+			endif;
+		endif;
+		counter = counter + 1;
+	endwhile;
+	print("Swapped");
+	print(index);
+	breakpoint;
+	[PROCESS_TABLE + index* 16] = 0;					//setting the tick to 0
+	// useful registers R1,R2,R3,R4,R5,R6,R7
+	alias ptbr R4;
+	alias pagenumber R5;
+	alias flag R6;
+	ptbr = [PROCESS_TABLE + index*16 + 14];
+	counter = 4;
+	while (counter < 20) do
+		pagenumber = [ptbr + counter];
+		flag = 1;
+		if (pagenumber != -1) then
+			if (counter == 4 || counter == 6 || counter == 16 || counter == 18) then				//heap
+				if ([MEMORY_FREE_LIST + pagenumber] > 1) then
+					flag = -1;
+				else
+					multipush(R1,R2,R3,R4,R5,R6,R7);
+					multipush(R2,R3,R5,R7);						//cheap trick
+					R1 = 6;												//Get swap block
+					call MOD_2;
+					multipop(R2,R3,R5,R7);
+					//multipop(R1,R2,R3,R4,R5,R6,R7);
+					[DISK_MAP_TABLE + 10 * index + (counter / 2)] = R0;	//returned block number
+					//multipush(R1,R2,R3,R4,R5,R6,R7);
+					R1 = 1;												//Disk store
+					R2 = currentPID;	
+					R3 = pagenumber;
+					R4 = R0;
+					call MOD_4;
+					multipop(R1,R2,R3,R4,R5,R6,R7);
+				endif;
+			//else
+			//	if (counter == 16 || counter == 18) then		//stack
+			//		multipush(R1,R2,R3,R4,R5,R6,R7);
+			//		multipush(R3,R5,R7);						//cheap trick
+			//		R1 = 6;												//Get swap block
+			//		call MOD_2;
+			//		multipop(R3,R5,R7);
+			//		//multipop(R1,R2,R3,R4,R5,R6,R7);
+			//		DISK_MAP_TABLE + 10 * index + (counter / 2)] = R0;	//returned block number
+			//		//multipush(R1,R2,R3,R4,R5,R6,R7);
+			//		R1 = 1;												//Disk store
+			//		R2 = [SYSTEM_STATUS_TABLE + 1];	
+			//		R3 = pagenumber;
+			//		R4 = R0;
+			//		call MOD_4;
+			//		multipop(R1,R2,R3,R4,R5,R6,R7);
+			//	else											//code*/
+			endif;
+			if (flag == 1) then
+				multipush(R1,R2,R3,R4,R5,R6,R7);
+				R1 = 2;												//Release page
+				R2 = [ptbr + counter];
+				call MOD_2;
+				multipop(R1,R2,R3,R4,R5,R6,R7);
+				[ptbr + counter] = -1;
+				[ptbr + counter + 1] = "0000";
+			endif;
+		endif;
+		counter = counter + 2;
+	endwhile;
+	// userarea page
+	pagenumber = [PROCESS_TABLE + index * 16 + 11];
+	multipush(R1,R2,R4,R5,R7);
+	multipush(R5,R7);						//cheap trick
+	R1 = 6;												//Get swap block
+	call MOD_2;
+	multipop(R5,R7);
+	//multipop(R1,R2,R4,R5,R7);
+	[DISK_MAP_TABLE + 10 * index] = R0;				//returned block number
+	//multipush(R1,R2,R4,R5,R7);
+	multipush(R5);										//pagenumber
+	R1 = 1;												//Disk store
+	R2 = [SYSTEM_STATUS_TABLE + 1];	
+	R3 = pagenumber;
+	R4 = R0;
+	call MOD_4;
+	multipop(R5);
+	//multipop(R1,R2,R4,R5,R7);
+	//multipush(R1,R2,R4,R5,R7);
+	R1 = 2;												//Release page
+	R2 = pagenumber;
+	call MOD_2;
+	multipop(R1,R2,R4,R5,R7);
+	[PROCESS_TABLE + index * 16 + 11] = -1;
+	[PROCESS_TABLE + index * 16 + 6] = 1;
+	[SYSTEM_STATUS_TABLE + 5] = -1;
+	[SYSTEM_STATUS_TABLE + 4] = [SYSTEM_STATUS_TABLE + 4] + 1;
+	return;
+endif;			
+if (functionNum == 2) then			//Swap in
+	return;
+	//print("MOD62");
+	//print([SYSTEM_STATUS_TABLE + 3]);
+	//breakpoint;
+	//if ([SYSTEM_STATUS_TABLE + 3] > 0 || [SYSTEM_STATUS_TABLE + 4] == 0) then
+	//	return;
+	//endif;
+	//[SYSTEM_STATUS_TABLE + 5] = [SYSTEM_STATUS_TABLE + 1];
+	alias counter R2;
+	alias index R3;
+	alias max R5;
+	alias flag R6;
+	counter = 3;
+	index = -1;
+	max = -1;
+	flag = -1;
+	while (counter < 16) do
+		if ([PROCESS_TABLE + counter*16 + 6] == 1 && [PROCESS_TABLE + counter*16 + 4] == READY) then
+			if ([PROCESS_TABLE + counter*16] > max) then
+				max = [PROCESS_TABLE + counter*16];
+				index = counter;
+				flag = 1;
+			endif;
+		endif;
+		counter = counter + 1;
+	endwhile;
+	if (flag == -1) then
+		[SYSTEM_STATUS_TABLE + 5] = -1;
+		return;
+	endif;
+	[PROCESS_TABLE + index*16] = 0;
+	alias blocknumber R4;
+	alias ptbr R5;
+	ptbr = [PROCESS_TABLE + index*16 + 14];
+	counter = 4;
+	while (counter < 20) do
+		blocknumber = [DISK_MAP_TABLE + 10*index + (counter/2)];
+		if (blocknumber != -1) then
+			multipush(R1,R2,R3,R4,R5);
+			R1 = 1;												//get free page
+			call MOD_2;
+			multipop(R1,R2,R3,R4,R5);
+			[ptbr + counter] = R0;
+			[ptbr + counter + 1] = "0110";
+			multipush(R1,R2,R3,R4,R5);
+			R1 = 2;												//disk load
+			R2 = [SYSTEM_STATUS_TABLE + 1];
+			R3 = R0;
+			R4 = blocknumber;
+			multipop(R1,R2,R3,R4,R5);
+			multipush(R1,R2,R3,R4,R5);
+			R1 = 4;												//release block
+			R2 = blocknumber;
+			R3 = [SYSTEM_STATUS_TABLE + 1];
+			call MOD_2;
+			multipop(R1,R2,R3,R4,R5);
+			[DISK_MAP_TABLE + 10*index + (counter/2)] = -1;
+		endif;
+		if (counter == 6) then
+			counter = 16;
+		else
+			counter = counter + 2;
+		endif;
+	endwhile;
+	//for userarea page
+	blocknumber = [DISK_MAP_TABLE + 10*index];
+	multipush(R1,R2,R3,R4,R5);
+	R1 = 1;												//get free page
+	call MOD_2;
+	multipop(R1,R2,R3,R4,R5);
+	[PROCESS_TABLE + 16*index + 11] = R0;
+	multipush(R1,R2,R3,R4,R5);
+	R1 = 2;												//disk load
+	R2 = [SYSTEM_STATUS_TABLE + 1];
+	R3 = R0;
+	R4 = blocknumber;
+	multipop(R1,R2,R3,R4,R5);
+	multipush(R1,R2,R3,R4,R5);
+	R1 = 4;												//release block
+	R2 = blocknumber;
+	R3 = [SYSTEM_STATUS_TABLE + 1];
+	call MOD_2;
+	multipop(R1,R2,R3,R4,R5);
+	[DISK_MAP_TABLE + 10*index] = -1;
+	[PROCESS_TABLE + 16*index + 6] = 0;
+	[SYSTEM_STATUS_TABLE + 5] = -1;
+	[SYSTEM_STATUS_TABLE + 4] = [SYSTEM_STATUS_TABLE + 4] - 1;
+	return;
+endif;			
